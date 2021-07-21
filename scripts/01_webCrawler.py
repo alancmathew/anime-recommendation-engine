@@ -4,11 +4,11 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import time
+import random
 import pickle
 import json
 from itertools import cycle
 from multiprocessing import Pool
-import os
 
 with open('../tools/key.json', encoding='utf-8') as file:
     key = json.loads(file.read())
@@ -28,6 +28,7 @@ def saveUrls():
         pickle.dump(urls, file)
 
 def getCurrentPageUrls(url):
+    time.sleep(random.randint(200,1000)/1000)
     cur_urls = set()
     
     reqs = requests.get(url, proxies={'http': next(proxy_cycle)})
@@ -48,31 +49,37 @@ def getCurrentPageUrls(url):
     return cur_urls
 
 def getAllUrls():
+    counter = 0
     while len(urls['novel']) > 0:
-        if len(urls['novel']) >= 16:
-            for _ in range(16):
-                pop_url = urls['novel'].pop()
-                if pop_url not in urls['done']:
-                    urls['batch'].append(pop_url)
-
-            with Pool(16) as p:
-                cur_urls = p.map(getCurrentPageUrls, urls['batch'])
-
-            cur_urls = set().union(*cur_urls)
-
-            urls['done'] = urls['done'].union(urls['batch'])
-            
-        else:
-            pop_url = urls['novel'].pop()
-            if pop_url not in urls['done']:
-                cur_urls = getCurrentPageUrls(pop_url)
-                urls['done'].add(pop_url)
+#        if len(urls['novel']) >= 16:
+#            for _ in range(16):
+#                pop_url = urls['novel'].pop()
+#                if pop_url not in urls['done']:
+#                    urls['batch'].append(pop_url)
+#
+#            with Pool(16) as p:
+#                cur_urls = p.map(getCurrentPageUrls, urls['batch'])
+#
+#            cur_urls = set().union(*cur_urls)
+#
+#            urls['done'] = urls['done'].union(urls['batch'])
+#            
+#        else:
+        pop_url = urls['novel'].pop()
+        if pop_url not in urls['done']:
+            cur_urls = getCurrentPageUrls(pop_url)
+            urls['done'].add(pop_url)
 
         
         print(len(urls['novel']), len(urls['done']), 0 if len(urls['novel']) == 0 else len(urls['done'])/len(urls['novel']))
 
         diff = cur_urls.difference(urls['done'])
         urls['novel'] = urls['novel'].union(diff)
-        saveUrls()
+        
+        counter += 1; 
+
+        if counter == 10:
+            saveUrls()
+            counter = 0
 
 getAllUrls()
