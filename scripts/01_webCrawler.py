@@ -31,7 +31,8 @@ def getCurrentPageUrls(url):
     time.sleep(random.randint(200,1000)/1000)
     cur_urls = set()
     
-    reqs = requests.get(url, proxies={'http': next(proxy_cycle)})
+    proxy = next(proxy_cycle)
+    reqs = requests.get(url, proxies={'http': proxy, 'https': proxy})
     soup = BeautifulSoup(reqs.text, 'html.parser')
 
     for link in soup.find_all('a'):
