@@ -1,4 +1,4 @@
-hard_drive = 'int_drive_0'
+hard_drive = 'sdb'
 
 import requests
 from bs4 import BeautifulSoup
@@ -6,61 +6,42 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 import os
+import sys
 import time
 import random
 import pickle
 import json
 from itertools import cycle
 from multiprocessing import Pool
+from concurrent.futures import ThreadPoolExecutor
 
-with open('../tools/key.json', encoding='utf-8') as file:
-    key = json.loads(file.read())
-    
-reqs = requests.get('https://proxy.webshare.io/api/proxy/list/', headers=key)
-
-proxy_list = reqs.json()['results']
-proxy_list = list(map(lambda x: f"http://{x['username']}:{x['password']}@{x['proxy_address']}:{x['ports']['http']}/", proxy_list))
-random.shuffle(proxy_list)
-proxy_cycle = cycle(proxy_list)
-
-user_agent_list = pd.read_csv('../tools/user_agent_list.txt', sep='\t', header=None)
-user_agent_list = user_agent_list[0].to_list()
+sys.path.insert(0, '../tools/')
+from specialRequests import specialRequests
 
 # urls = {'novel':{'https://www.anime-planet.com/'}, 'done':set(), 'batch':[]}
 with open('../data/urls.pkl','rb') as file:
     urls = pickle.load(file)  
 
-def saveUrls():
+def saveData(page_data):
     with open('../data/urls.pkl','wb') as file:
         pickle.dump(urls, file)
         
     with open("../data/urls_novel.json", 'w') as file:
         json.dump(list(urls['novel']), file, indent=2) 
-
-def getCurrentPageUrls(url, try_no=1):
-    
-    if try_no == 4:
-        return set(), {url: ''}
-    
-    global proxy_cycle
-    time.sleep(random.randint(2000,10000)/1000)
-    cur_urls = set()
-    
-    proxy = next(proxy_cycle)
-    user_agent = random.choice(user_agent_list)
-    headers = {'User-Agent': user_agent}
-    try:
-        reqs = requests.get(url, proxies={'http': proxy, 'https': proxy}, headers=headers)
-    except:
-        print(url, proxy)
-        return getCurrentPageUrls(url, try_no+1)
-    
-    if reqs.status_code != 200:
-        print(url, proxy)
-        return getCurrentPageUrls(url, try_no+1)
         
+    page_df = pd.DataFrame(page_data)
+    page_df.to_csv(f'/mnt/{hard_drive}/data/page_data.csv', mode='a', index=False,
+               header=not os.path.exists(f'/mnt/{hard_drive}/data/page_data.csv'))
+    del page_df
+
+sr = specialRequests()
+
+def getCurrentPageUrls(url):    
+    time.sleep(random.randint(2000, 5000)/1000)
     
-    html_text = reqs.text
+    cur_urls = set()
+
+    html_text = sr.get(url)
     soup = BeautifulSoup(html_text, 'html.parser')
 
     for link in soup.find_all('a'):
@@ -71,36 +52,75 @@ def getCurrentPageUrls(url, try_no=1):
         except:
             pass
     
-    return cur_urls, {url: html_text}
+    return cur_urls, (url, html_text)
 
-def getAllUrls():
-    counter = 0
+# def getAllUrls():
+#     page_data = {'url':[], 'html_text':[]}
+#     disallowed_urls = ['https://www.anime-planet.com/search.php', 'https://www.anime-planet.com/login',
+#                        'https://www.anime-planet.com/sign-up']
+#     while len(urls['novel']) > 0:
+#         pop_url = urls['novel'].pop()
+
+#         if pop_url[-1] == '.':
+#             pop_url = pop_url.replace('forum/members', 'users')[:-1]
+
+#         if (pop_url not in urls['done']) and (pop_url not in disallowed_urls):
+#             cur_urls, html_text = getCurrentPageUrls(pop_url)
+#             urls['done'].add(pop_url)
+#             page_data['url'].append(pop_url)
+#             page_data['html_text'].append(html_text)
+        
+#             diff = cur_urls.difference(urls['done'])
+#             urls['novel'] = urls['novel'].union(diff)
+        
+#             print(len(urls['novel']), len(urls['done']), 0 if len(urls['novel']) == 0 else len(urls['done'])/len(urls['novel']), pop_url)
+        
+#             if len(urls['done']) % 100 == 0:
+#                 print('saving data...')
+#                 saveData(page_data)
+#                 page_data = {'url':[], 'html_text':[]}
+
+def getAllUrlsMulti():
     page_data = {'url':[], 'html_text':[]}
     disallowed_urls = ['https://www.anime-planet.com/search.php', 'https://www.anime-planet.com/login',
                        'https://www.anime-planet.com/sign-up']
+    start_time = time.time()
     while len(urls['novel']) > 0:
-        pop_url = urls['novel'].pop()
-        if (pop_url not in urls['done']) and (pop_url not in disallowed_urls):
-            cur_urls, url_html_text = getCurrentPageUrls(pop_url)
-            urls['done'].add(pop_url)
-            page_data['url'].append(pop_url)
-            page_data['html_text'].append(url_html_text[pop_url])
+        popped_urls = []
+        while len(popped_urls) < 25:
+            pop_url = urls['novel'].pop()
 
-        
-        print(len(urls['novel']), len(urls['done']), 0 if len(urls['novel']) == 0 else len(urls['done'])/len(urls['novel']))
+            if pop_url[-1] == '.':
+                pop_url = pop_url.replace('forum/members', 'users')[:-1]
+
+            if (pop_url not in urls['done']) and (pop_url not in disallowed_urls):
+                popped_urls.append(pop_url)
+
+        with ThreadPoolExecutor(max_workers=25) as executor:
+            results = list(executor.map(getCurrentPageUrls, popped_urls))
+
+
+        urls['done'] = urls['done'].union(popped_urls)
+
+        cur_urls = set().union(*[item[0] for item in results])
+        list_of_tuples = [item[1] for item in results]
+        url_html_dict = {}
+        for tup in list_of_tuples:
+            page_data['url'].append(tup[0])
+            page_data['html_text'].append(tup[1])
 
         diff = cur_urls.difference(urls['done'])
         urls['novel'] = urls['novel'].union(diff)
-        
-        counter += 1; 
 
-        if counter % 10 == 0:
-            saveUrls()
-            page_df = pd.DataFrame(page_data)
-            page_df.to_csv(f'/mnt/{hard_drive}/data/page_data.csv', mode='a', index=False,
-                           header=not os.path.exists(f'/mnt/{hard_drive}/data/page_data.csv'))
-                
-            del page_df
+        print(len(urls['novel']), len(urls['done']), 0 if len(urls['novel']) == 0 else len(urls['done'])/len(urls['novel']))
+
+        if len(urls['done']) % 500 == 0:
+            end_time = time.time()
+            print('timer: ', end_time-start_time)
+            print('saving data...')
+            saveData(page_data)
             page_data = {'url':[], 'html_text':[]}
+            time.sleep(random.randint(5000, 10000)/1000)
+            start_time = time.time()
 
-getAllUrls()
+getAllUrlsMulti()
