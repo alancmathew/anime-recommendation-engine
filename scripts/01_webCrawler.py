@@ -37,7 +37,7 @@ def saveData(page_data):
 sr = specialRequests()
 
 def getCurrentPageUrls(url):    
-    time.sleep(random.randint(2000, 5000)/1000)
+    time.sleep(random.randint(1000, 5000)/1000)
     
     cur_urls = set()
 
@@ -120,7 +120,7 @@ def getAllUrlsMulti():
             print('saving data...')
             saveData(page_data)
             page_data = {'url':[], 'html_text':[]}
-            time.sleep(random.randint(5000, 10000)/1000)
+            time.sleep(random.randint(3000, 6000)/1000)
             start_time = time.time()
 
 getAllUrlsMulti()
