@@ -14,30 +14,49 @@ import json
 from itertools import cycle
 from multiprocessing import Pool
 from concurrent.futures import ThreadPoolExecutor
+import sqlalchemy as db
+from sqlalchemy import create_engine
 
 sys.path.insert(0, '../tools/')
 from specialRequests import specialRequests
 
-# urls = {'novel':{'https://www.anime-planet.com/'}, 'done':set(), 'batch':[]}
-with open('../data/urls.pkl','rb') as file:
-    urls = pickle.load(file)  
+with open('../tools/credentials.json') as file:
+    credentials = json.load(file)
+    
+username = credentials["dblogin"]["username"]
+password = credentials["dblogin"]["password"]
+
+db_string = f"postgresql://{username}:{password}@192.168.0.3:5432/animeplanet"
+db = create_engine(db_string)
+
+def loadData():
+    urls = {}
+    with db.connect() as con:
+        urls['done'] = set(pd.read_sql('SELECT url FROM web_scrape WHERE html_text IS NOT NULL', con)['url'].to_list())
+        urls['to_do'] = set(pd.read_sql('SELECT url FROM web_scrape WHERE html_text IS NULL', con)['url'].to_list())
+    return urls
+
+urls = loadData()
 
 def saveData(page_data):
     with open('../data/urls.pkl','wb') as file:
         pickle.dump(urls, file)
         
-    with open("../data/urls_novel.json", 'w') as file:
-        json.dump(list(urls['novel']), file, indent=2) 
+    with open("../data/urls.json", 'w') as file:
+        json.dump({'done':list(urls['done']), 'to_do':list(urls['to_do'])}, file, indent=2) 
         
     page_df = pd.DataFrame(page_data)
-    page_df.to_csv(f'/mnt/{hard_drive}/data/page_data.csv', mode='a', index=False,
-               header=not os.path.exists(f'/mnt/{hard_drive}/data/page_data.csv'))
+    
+    with db.connect() as con:
+        page_df.to_sql('web_scrape', con, index=False, if_exists='append', method='multi')
+        
     del page_df
 
 sr = specialRequests()
 
 def getCurrentPageUrls(url):    
-    time.sleep(random.randint(1000, 5000)/1000)
+    
+    time.sleep(random.randint(200, 2000)/1000)
     
     cur_urls = set()
 
@@ -80,15 +99,19 @@ def getCurrentPageUrls(url):
 #                 saveData(page_data)
 #                 page_data = {'url':[], 'html_text':[]}
 
-def getAllUrlsMulti():
+def getAllUrlsMulti(urls):
     page_data = {'url':[], 'html_text':[]}
     disallowed_urls = ['https://www.anime-planet.com/search.php', 'https://www.anime-planet.com/login',
                        'https://www.anime-planet.com/sign-up']
     start_time = time.time()
-    while len(urls['novel']) > 0:
+    first = True
+    while len(urls['to_do']) > 0:
         popped_urls = []
-        while len(popped_urls) < 25:
-            pop_url = urls['novel'].pop()
+        
+        dist_to25 = 25 - (len(urls['done']) % 25)
+        
+        while len(popped_urls) < dist_to25:
+            pop_url = urls['to_do'].pop()
 
             if pop_url[-1] == '.':
                 pop_url = pop_url.replace('forum/members', 'users')[:-1]
@@ -109,18 +132,25 @@ def getAllUrlsMulti():
             page_data['url'].append(tup[0])
             page_data['html_text'].append(tup[1])
 
-        diff = cur_urls.difference(urls['done'])
-        urls['novel'] = urls['novel'].union(diff)
+        novel = cur_urls.difference(urls['done'])
+        urls['to_do'] = urls['to_do'].union(novel)
+        
+        for link in novel:
+            page_data['url'].append(link)
+            page_data['html_text'].append(np.NaN)
+        
+        print(len(urls['to_do']), len(urls['done']), 0 if len(urls['to_do']) == 0 else len(urls['done'])/len(urls['to_do']))
 
-        print(len(urls['novel']), len(urls['done']), 0 if len(urls['novel']) == 0 else len(urls['done'])/len(urls['novel']))
-
-        if len(urls['done']) % 500 == 0:
+        len_done = len(urls['done'])
+        if len_done % 500 == 0:
             end_time = time.time()
             print('timer: ', end_time-start_time)
             print('saving data...')
             saveData(page_data)
+            if len_done % 10000 == 0:
+                urls = loadData()
             page_data = {'url':[], 'html_text':[]}
             time.sleep(random.randint(3000, 6000)/1000)
             start_time = time.time()
 
-getAllUrlsMulti()
+getAllUrlsMulti(urls)
