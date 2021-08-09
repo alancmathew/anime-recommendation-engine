@@ -16,10 +16,11 @@ import pickle
 import json
 from itertools import cycle
 from concurrent.futures import ThreadPoolExecutor
+import sqlalchemy
 from sqlalchemy import create_engine
 
-sys.path.insert(0, '../tools/')
-from specialRequests import specialRequests
+# sys.path.insert(0, '../tools/')
+# from specialRequests import specialRequests
 
 
 # In[2]:
@@ -36,7 +37,7 @@ class AnimePlanetCrawler:
         db_string = f"postgresql://{username}:{password}@192.168.0.3:5432/animeplanet"
         self.db = create_engine(db_string)
         
-        self.sr = specialRequests()
+#         self.sr = specialRequests()
 
 
 # In[3]:
@@ -45,8 +46,16 @@ class AnimePlanetCrawler:
 def loadData(self):
     print('loading data...')
     with self.db.connect() as con:
-        self.done = set(pd.read_sql('SELECT url FROM web_scrape WHERE html_text IS NOT NULL;', con)['url'].to_list())
-        self.pending = set(pd.read_sql('SELECT url FROM web_scrape WHERE html_text IS NULL;', con)['url'].to_list())
+        query = """SELECT url 
+                    FROM web_scrape 
+                    WHERE html_text IS NOT NULL;"""
+        self.done = set(pd.read_sql(sqlalchemy.text(query), con)['url'].to_list())
+        
+        query = """SELECT url 
+                    FROM web_scrape 
+                    WHERE html_text IS NULL;"""
+        self.pending = set(pd.read_sql(sqlalchemy.text(query), con)['url'].to_list())
+        
         self.novel = set()
         self.batch = {}
 
@@ -82,14 +91,11 @@ def saveData(self):
     batch_urls = batch_dict['url']
     novel_urls = novel_dict['url']
     
-    inter = set(batch_urls).intersection(set(novel_urls))
-    
-    if (len(inter) != 0):
-        print('inter:', inter)
-    
     with self.db.connect() as con:
         print('\tremoving popped pending data...')
-        con.execute(f"DELETE FROM web_scrape WHERE url in ({str(batch_urls)[1:-1]})")
+        query = f"""DELETE FROM web_scrape 
+                    WHERE url in ({str(batch_urls)[1:-1]})"""
+        con.execute(sqlalchemy.text(query))
         
         print('\tsaving done data...')
         batch_df.to_sql('web_scrape', con, index=False, if_exists='append')
@@ -99,7 +105,10 @@ def saveData(self):
             novel_df.to_sql('web_scrape', con, index=False, if_exists='append')
         except Exception as e: 
             print(e)
-            con.execute(f"UPDATE web_scrape SET html_text = NULL WHERE url IN ({str(batch_urls)[1:-1]})")
+            query = f"""UPDATE web_scrape 
+                        SET html_text = NULL 
+                        WHERE url IN ({str(batch_urls)[1:-1]})"""
+            con.execute(sqlalchemy.text(query))
             self.done = self.done.difference(batch_urls)
             self.pending = self.pending.difference(novel_urls)
             self.pending = self.pending.union(batch_urls)
@@ -111,55 +120,60 @@ def saveData(self):
 # In[5]:
 
 
-def scrapePage(self, url):    
- 
-    cur_urls = set()
-
-    html_text = self.sr.get(url)
-    soup = BeautifulSoup(html_text, 'html.parser')
-
-    for link in soup.find_all('a'):
-        try:
-            branch = link.get('href')
-            if branch[0] == '/':
-                cur_urls.add('https://www.anime-planet.com' + branch)
-        except:
-            pass
+def scrapePage(self, url):
     
-    return cur_urls, (url, html_text)
+    if ('forum/members' in url) and (url[-1] == '.'):
+        return (url, '')
+
+    resp = requests.get(f'http://192.168.0.3:5000/special-requests?url={url}')
+    html_text = resp.text
+#     html_text = self.sr.get(url)
+    
+    return (url, html_text)
 
 
 # In[6]:
 
 
-def popBatch(self):
-    disallowed_urls = ['https://www.anime-planet.com/search.php', 'https://www.anime-planet.com/login', 
-                       'https://www.anime-planet.com/sign-up']
+def parsePage(self, html_text):
+    if html_text == '':
+        return set()
+
+    soup = BeautifulSoup(html_text, 'html.parser')
     
-    dist_to25 = (25 - (len(self.done) % 25))
+    links = [str(a.get('href')) for a in soup.find_all('a')]
+    in_domain_links = filter(lambda x: x and x[0] == '/', links)
+    cur_urls = set([f'https://www.anime-planet.com{link}' for link in in_domain_links])
+    
+    return cur_urls
+
+
+# In[7]:
+
+
+def popBatch(self):
+    
+    dist_to25 = 25 - (len(self.done) % 25)
     
     popped_urls = set()
     while len(popped_urls) < dist_to25:
         pop_url = self.pending.pop()
 
         if pop_url[-1] == '.':
-            new_url = pop_url
-            new_url = new_url.replace('forum/members', 'users')[:-1]
-            if (new_url not in self.done) and (new_url not in disallowed_urls):
-                popped_urls.add(new_url)
+            new_url = pop_url.replace('forum/members', 'users')[:-1]
+            self.pending.add(new_url)
                 
-        if (pop_url not in self.done) and (pop_url not in disallowed_urls):
-            popped_urls.add(pop_url)
+        popped_urls.add(pop_url)
             
     return popped_urls
 
 
-# In[7]:
+# In[8]:
 
 
-def processCrawlResults(self, results):
-    cur_urls = set().union(*map(lambda x: x[0], results))
-    url_html_tup = map(lambda x: x[1], results)
+def processCrawlResults(self, url_html_tup):
+    cur_urls_set_list = map(self.parsePage, [x[1] for x in url_html_tup])
+    cur_urls = set().union(*cur_urls_set_list)
     for url, html_text in url_html_tup:
         self.done.add(url)
         self.batch[url] = 'failed scrape' if html_text == '' else html_text
@@ -169,7 +183,7 @@ def processCrawlResults(self, results):
     self.pending = self.pending.union(cur_urls)
 
 
-# In[8]:
+# In[9]:
 
 
 def printCrawlProgress(self):
@@ -179,52 +193,71 @@ def printCrawlProgress(self):
     return len_done
 
 
-# In[9]:
+# In[10]:
+
+
+def waiter(self, secs):
+    print(f'waiting {secs} secs...')
+    for _ in tqdm(range(secs)):
+        time.sleep(1)
+
+
+# In[11]:
 
 
 def crawl(self):
     self.loadData()
     print('starting crawl...')
     start_time = time.time()
+    
     while len(self.pending) > 0:
 
-        
         popped_urls = self.popBatch()    
-            
+
         with ThreadPoolExecutor(max_workers=25) as executor:
-            results = list(executor.map(self.scrapePage, popped_urls))
+            url_html_tup = list(executor.map(self.scrapePage, popped_urls))
         
-        self.processCrawlResults(results)
-        
+        self.processCrawlResults(url_html_tup)
+
         len_done = self.printCrawlProgress()
-        
+
         if len_done % 500 == 0:
             end_time = time.time()
             print('timer: ', end_time-start_time)
             self.saveData()
+            if len_done % 500000 == 0:
+                sleep_time = random.randint(3600*3, 3600*5)
+                self.waiter(sleep_time)
+            elif len_done % 100000 == 0:
+                sleep_time = random.randint(3600)
+                self.waiter(sleep_time)
+            else:
+                self.waiter(30)
             print('starting crawl...')
             start_time = time.time()
 
 
-# In[10]:
+# In[12]:
 
 
 AnimePlanetCrawler.loadData = loadData
 AnimePlanetCrawler.saveData = saveData
 AnimePlanetCrawler.scrapePage = scrapePage
+AnimePlanetCrawler.parsePage = parsePage
 AnimePlanetCrawler.popBatch = popBatch
 AnimePlanetCrawler.processCrawlResults = processCrawlResults
 AnimePlanetCrawler.printCrawlProgress = printCrawlProgress
+AnimePlanetCrawler.waiter = waiter
 AnimePlanetCrawler.crawl = crawl
 
 
-# In[11]:
+# In[13]:
 
 
 crawler = AnimePlanetCrawler()
 
 
-# In[12]:
+# In[14]:
 
 
 crawler.crawl()
