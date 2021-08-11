@@ -16,6 +16,7 @@ import pickle
 import json
 from itertools import cycle
 from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Pool
 import sqlalchemy
 from sqlalchemy import create_engine
 
@@ -120,7 +121,7 @@ def saveData(self):
 # In[5]:
 
 
-def scrapePage(self, url):
+def scrapePage(url):
     
     if ('forum/members' in url) and (url[-1] == '.'):
         return (url, '')
@@ -135,7 +136,7 @@ def scrapePage(self, url):
 # In[6]:
 
 
-def parsePage(self, html_text):
+def parsePage(html_text):
     if html_text == '':
         return set()
 
@@ -153,10 +154,10 @@ def parsePage(self, html_text):
 
 def popBatch(self):
     
-    dist_to25 = 25 - (len(self.done) % 25)
+    dist_to50 = 50 - (len(self.done) % 50)
     
     popped_urls = set()
-    while len(popped_urls) < dist_to25:
+    while len(popped_urls) < dist_to50:
         pop_url = self.pending.pop()
 
         if pop_url[-1] == '.':
@@ -172,15 +173,17 @@ def popBatch(self):
 
 
 def processCrawlResults(self, url_html_tup):
-    cur_urls_set_list = map(self.parsePage, [x[1] for x in url_html_tup])
+    html_text_list = [x[1] for x in url_html_tup]
+    with Pool(2) as p:
+        cur_urls_set_list = p.map(parsePage, html_text_list)
     cur_urls = set().union(*cur_urls_set_list)
     for url, html_text in url_html_tup:
         self.done.add(url)
         self.batch[url] = 'failed scrape' if html_text == '' else html_text
     
     cur_urls = (cur_urls.difference(self.pending)).difference(self.done)
-    self.novel = self.novel.union(cur_urls)
-    self.pending = self.pending.union(cur_urls)
+    self.novel.update(cur_urls)
+    self.pending.update(cur_urls)
 
 
 # In[9]:
@@ -196,7 +199,7 @@ def printCrawlProgress(self):
 # In[10]:
 
 
-def waiter(self, secs):
+def waiter(secs):
     print(f'waiting {secs} secs...')
     for _ in tqdm(range(secs)):
         time.sleep(1)
@@ -214,26 +217,33 @@ def crawl(self):
 
         popped_urls = self.popBatch()    
 
-        with ThreadPoolExecutor(max_workers=25) as executor:
-            url_html_tup = list(executor.map(self.scrapePage, popped_urls))
+        with ThreadPoolExecutor(max_workers=50) as executor:
+            url_html_tup = list(executor.map(scrapePage, popped_urls))
         
         self.processCrawlResults(url_html_tup)
 
         len_done = self.printCrawlProgress()
 
-        if len_done % 500 == 0:
+        
+        if len_done % 100 == 0:
             end_time = time.time()
             print('timer: ', end_time-start_time)
-            self.saveData()
-            if len_done % 500000 == 0:
-                sleep_time = random.randint(3600*3, 3600*5)
-                self.waiter(sleep_time)
-            elif len_done % 100000 == 0:
-                sleep_time = random.randint(3600)
-                self.waiter(sleep_time)
+            if len_done % 1000 == 0:
+                self.saveData()
+                if len_done % 500000 == 0:
+                    sleep_time = random.randint(3600*3, 3600*5)
+                    waiter(sleep_time)
+                elif len_done % 100000 == 0:
+                    sleep_time = random.randint(1800, 3600)
+                    waiter(sleep_time)
+                elif len_done % 10000 == 0:
+                    sleep_time = random.randint(300, 600)
+                    waiter(sleep_time)
+                print('starting crawl...')
+                
             else:
-                self.waiter(30)
-            print('starting crawl...')
+                time.sleep(random.randint(5, 10))
+                
             start_time = time.time()
 
 
@@ -242,12 +252,9 @@ def crawl(self):
 
 AnimePlanetCrawler.loadData = loadData
 AnimePlanetCrawler.saveData = saveData
-AnimePlanetCrawler.scrapePage = scrapePage
-AnimePlanetCrawler.parsePage = parsePage
 AnimePlanetCrawler.popBatch = popBatch
 AnimePlanetCrawler.processCrawlResults = processCrawlResults
 AnimePlanetCrawler.printCrawlProgress = printCrawlProgress
-AnimePlanetCrawler.waiter = waiter
 AnimePlanetCrawler.crawl = crawl
 
 
