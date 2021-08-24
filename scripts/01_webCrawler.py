@@ -99,11 +99,11 @@ def saveData(self):
         con.execute(sqlalchemy.text(query))
         
         print('\tsaving done data...')
-        batch_df.to_sql('web_scrape', con, index=False, if_exists='append')
+        batch_df.to_sql('web_scrape', con, index=False, if_exists='append', method='multi')
 
         try:
             print('\tsaving pending data...')
-            novel_df.to_sql('web_scrape', con, index=False, if_exists='append')
+            novel_df.to_sql('web_scrape', con, index=False, if_exists='append', method='multi')
         except Exception as e: 
             print(e)
             query = f"""UPDATE web_scrape 
@@ -154,10 +154,10 @@ def parsePage(html_text):
 
 def popBatch(self):
     
-    dist_to50 = 50 - (len(self.done) % 50)
+    dist_to10 = 10 - (len(self.done) % 10)
     
     popped_urls = set()
-    while len(popped_urls) < dist_to50:
+    while len(popped_urls) < dist_to10:
         pop_url = self.pending.pop()
 
         if pop_url[-1] == '.':
@@ -174,7 +174,7 @@ def popBatch(self):
 
 def processCrawlResults(self, url_html_tup):
     html_text_list = [x[1] for x in url_html_tup]
-    with Pool(2) as p:
+    with Pool(4) as p:
         cur_urls_set_list = p.map(parsePage, html_text_list)
     cur_urls = set().union(*cur_urls_set_list)
     for url, html_text in url_html_tup:
@@ -217,7 +217,7 @@ def crawl(self):
 
         popped_urls = self.popBatch()    
 
-        with ThreadPoolExecutor(max_workers=50) as executor:
+        with ThreadPoolExecutor(max_workers=10) as executor:
             url_html_tup = list(executor.map(scrapePage, popped_urls))
         
         self.processCrawlResults(url_html_tup)
