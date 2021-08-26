@@ -35,7 +35,7 @@ class AnimePlanetCrawler:
         username = credentials["dblogin"]["username"]
         password = credentials["dblogin"]["password"]
 
-        db_string = f"postgresql://{username}:{password}@192.168.0.3:5432/animeplanet"
+        db_string = f"postgresql://{username}:{password}@localhost:5432/animeplanet"
         self.db = create_engine(db_string)
         
 #         self.sr = specialRequests()
@@ -121,37 +121,6 @@ def saveData(self):
 # In[5]:
 
 
-def scrapePage(url):
-    
-    if ('forum/members' in url) and (url[-1] == '.'):
-        return (url, '')
-
-    resp = requests.get(f'http://192.168.0.3:5000/special-requests?url={url}')
-    html_text = resp.text
-#     html_text = self.sr.get(url)
-    
-    return (url, html_text)
-
-
-# In[6]:
-
-
-def parsePage(html_text):
-    if html_text == '':
-        return set()
-
-    soup = BeautifulSoup(html_text, 'html.parser')
-    
-    links = [str(a.get('href')) for a in soup.find_all('a')]
-    in_domain_links = filter(lambda x: x and x[0] == '/', links)
-    cur_urls = set([f'https://www.anime-planet.com{link}' for link in in_domain_links])
-    
-    return cur_urls
-
-
-# In[7]:
-
-
 def popBatch(self):
     
     dist_to10 = 10 - (len(self.done) % 10)
@@ -169,7 +138,50 @@ def popBatch(self):
     return popped_urls
 
 
+# In[6]:
+
+
+def scrapePage(url):
+    
+    if ('forum/members' in url) and (url[-1] == '.'):
+        return (url, '')
+
+    resp = requests.get(f'http://192.168.0.3:5000/special-requests?url={url}')
+    html_text = resp.text
+#     html_text = self.sr.get(url)
+    
+    return (url, html_text)
+
+
+# In[7]:
+
+
+def scrapePages(urls):
+    
+    resp = requests.post(f'http://192.168.0.3:5000/special-requests', json={'url':urls})
+    url_html_dict = resp.json()
+#     html_text = self.sr.get(url)
+    
+    return url_html_dict.items()
+
+
 # In[8]:
+
+
+def parsePage(html_text):
+    if html_text == '':
+        return set()
+
+    soup = BeautifulSoup(html_text, 'html.parser')
+    
+    links = [str(a.get('href')) for a in soup.find_all('a')]
+    in_domain_links = filter(lambda x: x and x[0] == '/', links)
+    cur_urls = set([f'https://www.anime-planet.com{link}' for link in in_domain_links])
+    
+    return cur_urls
+
+
+# In[9]:
 
 
 def processCrawlResults(self, url_html_tup):
@@ -186,7 +198,7 @@ def processCrawlResults(self, url_html_tup):
     self.pending.update(cur_urls)
 
 
-# In[9]:
+# In[10]:
 
 
 def printCrawlProgress(self):
@@ -196,7 +208,7 @@ def printCrawlProgress(self):
     return len_done
 
 
-# In[10]:
+# In[11]:
 
 
 def waiter(secs):
@@ -205,7 +217,7 @@ def waiter(secs):
         time.sleep(1)
 
 
-# In[11]:
+# In[12]:
 
 
 def crawl(self):
@@ -247,7 +259,7 @@ def crawl(self):
             start_time = time.time()
 
 
-# In[12]:
+# In[13]:
 
 
 AnimePlanetCrawler.loadData = loadData
@@ -258,13 +270,13 @@ AnimePlanetCrawler.printCrawlProgress = printCrawlProgress
 AnimePlanetCrawler.crawl = crawl
 
 
-# In[13]:
+# In[14]:
 
 
 crawler = AnimePlanetCrawler()
 
 
-# In[14]:
+# In[15]:
 
 
 crawler.crawl()
