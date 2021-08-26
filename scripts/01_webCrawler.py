@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[1]:
+# In[ ]:
 
 
 import requests
@@ -24,7 +24,7 @@ from sqlalchemy import create_engine
 # from specialRequests import specialRequests
 
 
-# In[2]:
+# In[ ]:
 
 
 class AnimePlanetCrawler:
@@ -41,7 +41,7 @@ class AnimePlanetCrawler:
 #         self.sr = specialRequests()
 
 
-# In[3]:
+# In[ ]:
 
 
 def loadData(self):
@@ -61,7 +61,7 @@ def loadData(self):
         self.batch = {}
 
 
-# In[4]:
+# In[ ]:
 
 
 def saveData(self):
@@ -118,7 +118,7 @@ def saveData(self):
     self.novel = set()
 
 
-# In[5]:
+# In[ ]:
 
 
 def popBatch(self):
@@ -138,7 +138,7 @@ def popBatch(self):
     return popped_urls
 
 
-# In[6]:
+# In[ ]:
 
 
 def scrapePage(url):
@@ -153,7 +153,7 @@ def scrapePage(url):
     return (url, html_text)
 
 
-# In[7]:
+# In[ ]:
 
 
 def scrapePages(urls):
@@ -165,7 +165,7 @@ def scrapePages(urls):
     return url_html_dict.items()
 
 
-# In[8]:
+# In[ ]:
 
 
 def parsePage(html_text):
@@ -181,7 +181,7 @@ def parsePage(html_text):
     return cur_urls
 
 
-# In[9]:
+# In[ ]:
 
 
 def processCrawlResults(self, url_html_tup):
@@ -198,7 +198,7 @@ def processCrawlResults(self, url_html_tup):
     self.pending.update(cur_urls)
 
 
-# In[10]:
+# In[ ]:
 
 
 def printCrawlProgress(self):
@@ -208,7 +208,7 @@ def printCrawlProgress(self):
     return len_done
 
 
-# In[11]:
+# In[ ]:
 
 
 def waiter(secs):
@@ -217,7 +217,7 @@ def waiter(secs):
         time.sleep(1)
 
 
-# In[12]:
+# In[ ]:
 
 
 def crawl(self):
@@ -259,7 +259,7 @@ def crawl(self):
             start_time = time.time()
 
 
-# In[13]:
+# In[ ]:
 
 
 AnimePlanetCrawler.loadData = loadData
@@ -270,13 +270,13 @@ AnimePlanetCrawler.printCrawlProgress = printCrawlProgress
 AnimePlanetCrawler.crawl = crawl
 
 
-# In[14]:
+# In[ ]:
 
 
 crawler = AnimePlanetCrawler()
 
 
-# In[15]:
+# In[ ]:
 
 
 crawler.crawl()
