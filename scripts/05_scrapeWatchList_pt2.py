@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+# In[1]:
 
 
 import pickle
@@ -23,7 +23,7 @@ import re
 import itertools
 
 
-# In[ ]:
+# In[2]:
 
 
 with open('../tools/credentials.json') as file:
@@ -33,14 +33,14 @@ username = credentials["dblogin"]["username"]
 password = credentials["dblogin"]["password"]
 
 
-# In[ ]:
+# In[3]:
 
 
 db_string = f"postgresql://{username}:{password}@localhost:5432/animeplanet"
 db = create_engine(db_string)
 
 
-# In[ ]:
+# In[4]:
 
 
 def chunker(seq, size):
@@ -49,7 +49,7 @@ def chunker(seq, size):
 
 # ### Scrape User Watch List (Additional Pages)
 
-# In[ ]:
+# In[5]:
 
 
 query = """
@@ -62,7 +62,7 @@ df = pd.read_sql(sql.text(query), db)
 pd.concat([df.head(), df.tail()])
 
 
-# In[ ]:
+# In[6]:
 
 
 def generatePageUrls(row):
@@ -71,19 +71,19 @@ def generatePageUrls(row):
     return urls
 
 
-# In[ ]:
+# In[7]:
 
 
 urls = set(itertools.chain.from_iterable(df.apply(generatePageUrls, axis=1).to_list()))
 
 
-# In[ ]:
+# In[8]:
 
 
 len(urls)
 
 
-# In[ ]:
+# In[9]:
 
 
 query = """
@@ -95,19 +95,19 @@ query = """
 completed = set(pd.read_sql(sql.text(query), db)['url'].to_list())
 
 
-# In[ ]:
+# In[10]:
 
 
 len(completed)
 
 
-# In[ ]:
+# In[11]:
 
 
 urls = sorted(list(urls.difference(completed)))
 
 
-# In[ ]:
+# In[12]:
 
 
 len(urls)
@@ -118,7 +118,7 @@ len(urls)
 
 def getPage(url, attempt=1):
     if attempt == 4:
-        return (url, '')
+        return (url, np.NaN)
     
     try:
         resp = requests.get(f'http://192.168.0.3:5000/special-requests?url={quote(url)}')
@@ -160,7 +160,7 @@ def saveData():
 # In[ ]:
 
 
-chunksize = 25
+chunksize = 10
 list_of_tups = []
 result_dict = {'url':[], 'html_text':[]}
 
@@ -181,7 +181,7 @@ for idx, url_chunk in enumerate(tqdm(url_chunks, total=len(urls)/chunksize), 1):
         else:
             time.sleep(random.randint(5, 10))
     else:       
-        time.sleep(random.randint(2, 5))
+        time.sleep(random.randint(1, 2))
         
 saveData()
 
