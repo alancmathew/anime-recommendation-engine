@@ -19,6 +19,7 @@ from concurrent.futures import ThreadPoolExecutor
 from multiprocessing import Pool
 import sqlalchemy
 from sqlalchemy import create_engine
+from urllib.parse import quote
 
 # sys.path.insert(0, '../tools/')
 # from specialRequests import specialRequests
@@ -146,7 +147,7 @@ def scrapePage(url):
     if ('forum/members' in url) and (url[-1] == '.'):
         return (url, '')
 
-    resp = requests.get(f'http://192.168.0.3:5000/special-requests?url={url}')
+    resp = requests.get(f'http://192.168.0.3:5000/special-requests?url={quote(url)}')
     html_text = resp.text
 #     html_text = self.sr.get(url)
     
