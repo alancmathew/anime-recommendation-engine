@@ -23,7 +23,7 @@ import re
 import itertools
 
 
-# In[2]:
+# In[ ]:
 
 
 with open('../tools/credentials.json') as file:
@@ -33,14 +33,14 @@ username = credentials["dblogin"]["username"]
 password = credentials["dblogin"]["password"]
 
 
-# In[3]:
+# In[ ]:
 
 
 db_string = f"postgresql://{username}:{password}@localhost:5432/animeplanet"
 db = create_engine(db_string)
 
 
-# In[4]:
+# In[ ]:
 
 
 def chunker(seq, size):
@@ -49,7 +49,7 @@ def chunker(seq, size):
 
 # ### Scrape User Watch List (Additional Pages)
 
-# In[5]:
+# In[ ]:
 
 
 query = """
@@ -62,7 +62,7 @@ df = pd.read_sql(sql.text(query), db)
 pd.concat([df.head(), df.tail()])
 
 
-# In[6]:
+# In[ ]:
 
 
 def generatePageUrls(row):
@@ -71,19 +71,19 @@ def generatePageUrls(row):
     return urls
 
 
-# In[7]:
+# In[ ]:
 
 
 urls = set(itertools.chain.from_iterable(df.apply(generatePageUrls, axis=1).to_list()))
 
 
-# In[8]:
+# In[ ]:
 
 
 len(urls)
 
 
-# In[9]:
+# In[ ]:
 
 
 query = """
@@ -95,19 +95,21 @@ query = """
 completed = set(pd.read_sql(sql.text(query), db)['url'].to_list())
 
 
-# In[10]:
+# In[ ]:
 
 
 len(completed)
 
 
-# In[11]:
+# In[ ]:
 
 
-urls = sorted(list(urls.difference(completed)))
+urls = list(urls.difference(completed))
+del completed
+random.shuffle(urls)
 
 
-# In[12]:
+# In[ ]:
 
 
 len(urls)
@@ -174,20 +176,17 @@ for idx, url_chunk in enumerate(tqdm(url_chunks, total=len(urls)/chunksize), 1):
           
         saveData()
             
-        if idx % 100 == 0:
-            time.sleep(random.randint(30, 60))
+        if idx % 10000 == 0:
+            time.sleep(random.randint(1000, 2000))
         elif idx % 1000 == 0:
-            time.sleep(random.randint(300, 600))
+            time.sleep(random.randint(100, 200))
+        elif idx % 100 == 0:
+            time.sleep(random.randint(20, 30))
         else:
-            time.sleep(random.randint(5, 10))
+            time.sleep(random.randint(10, 20))
     else:       
-        time.sleep(random.randint(1, 2))
+#         time.sleep(max(0, np.random.normal(2, 0.5)))
+        time.sleep(max(min(np.random.poisson(4), 8), 2))
         
 saveData()
-
-
-# In[ ]:
-
-
-
 
