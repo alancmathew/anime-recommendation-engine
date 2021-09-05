@@ -236,28 +236,30 @@ def crawl(self):
         self.processCrawlResults(url_html_tup)
 
         len_done = self.printCrawlProgress()
-
         
         if len_done % 100 == 0:
             end_time = time.time()
             print('timer: ', end_time-start_time)
-            if len_done % 1000 == 0:
-                self.saveData()
-                if len_done % 500000 == 0:
-                    sleep_time = random.randint(3600*3, 3600*5)
-                    waiter(sleep_time)
-                elif len_done % 100000 == 0:
-                    sleep_time = random.randint(1800, 3600)
-                    waiter(sleep_time)
-                elif len_done % 10000 == 0:
-                    sleep_time = random.randint(300, 600)
-                    waiter(sleep_time)
-                print('starting crawl...')
+            self.saveData()
                 
+            if len_done % 500000 == 0:
+                sleep_time = random.randint(500, 1000)
+            elif len_done % 100000 == 0:
+                sleep_time = random.randint(100, 200)
+            elif len_done % 10000 == 0:
+                sleep_time = random.randint(20, 30)
+            elif len_done % 1000 == 0:
+                sleep_time = random.randint(10, 20)
             else:
-                time.sleep(random.randint(5, 10))
-                
+                sleep_time = random.randint(5, 10)
+              
+            waiter(sleep_time)
+            
+            print('starting crawl...')
             start_time = time.time()
+            
+        else:
+            time.sleep(max(min(np.random.poisson(2), 5), 1))
 
 
 # In[ ]:
