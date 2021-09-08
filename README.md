@@ -1,6 +1,6 @@
 # The Anime Recommendation Engine
 
-### Helping you find your next favourite anime to binge
+### Helping you find your next favourite anime to binge watch
 
 ![00_titleImage](./assets/00_anime-cover-cropped.jpg)
 
