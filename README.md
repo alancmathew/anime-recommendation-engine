@@ -2,7 +2,7 @@
 
 ### Helping you find your next favourite anime to binge watch
 
-![00_titleImage](./assets/imgs/00_anime-cover-cropped.jpg)
+![00_titleImage](./assets/imgs/00_general/00_anime-cover-cropped.jpg)
 
 ## Table of Contents <a name="toc"></a>
 
@@ -14,7 +14,7 @@ _**[2. Exploratory Analysis](#2-ea)**_
 
 _**[3. Relational (Multivariate) Analysis ](#3-ra)**_
 
-_**[4. Feature Engineering & Data Preparation](#4-fe+dp)**_ 
+_**[4. Feature Engineering](#4-fe)**_ 
 
 _**[5. Model Training & Evaluation](#5-model)**_
 
@@ -138,7 +138,7 @@ anime['title'].nunique()
 
 Of these, which are the most popular?
 
-![](./assets/imgs/01_title_top10_count.png)
+![](./assets/imgs/01_exploratory/01_title_top10_count.png)
 
 ### 2.2. Number of Episodes (`num_eps`) <a href="#2-ea">^</a>
 
@@ -158,7 +158,7 @@ anime['num_eps'].describe()
 # Name: num_eps, dtype: float64
 ```
 
-![](./assets/imgs/02_num_eps_distribution.png)
+![](./assets/imgs/01_exploratory/02_num_eps_distribution.png)
 
 We see that the maximum number of episodes a show has is: **2,617**. 
 
@@ -224,7 +224,7 @@ anime['duration'].describe()
 # Name: duration, dtype: float64
 ```
 
-![](./assets/imgs/03_duration_distribution.png)
+![](./assets/imgs/01_exploratory/03_duration_distribution.png)
 
 We see that the maximum duration (length of an episode in minutes) a show has is: **90**. 
 
@@ -264,13 +264,13 @@ It's a show called _Heidi: Heidi to Clara Hen_.
 
 ### 2.5. Studio (`studio`) <a href="#2-ea">^</a>
 
-![](./assets/imgs/04_studio_top10_count.png)
+![](./assets/imgs/01_exploratory/04_studio_top10_count.png)
 
 We see that _Toei Animation_ studio has created the most unique anime shows.
 
 ### 2.6. Start Year (`start_year`) <a href="#2-ea">^</a>
 
-![](./assets/imgs/05_start_year_distribution.png)
+![](./assets/imgs/01_exploratory/05_start_year_distribution.png)
 
 We can see a sharp rise in the release of anime shows since the mid 1990's and we see a sudden dip in 2020, most likely due to the global pandemic.
 
@@ -278,7 +278,7 @@ We can see a sharp rise in the release of anime shows since the mid 1990's and w
 
 Anime release times are divided into four season throughout the year: *Winter*, *Spring*, *Summer*, and *Fall*.
 
-![](./assets/imgs/06_season_distribution.png)
+![](./assets/imgs/01_exploratory/06_season_distribution.png)
 
 We see that the most number of titles are released in the *Spring*. On the other hand, *Summer* seems to be the least popular release time.
 
@@ -300,7 +300,7 @@ df['user_rating'].describe()
 # Name: user_rating, dtype: float64
 ```
 
-![](./assets/imgs/13_user_rating_distribution.png)
+![](./assets/imgs/01_exploratory/13_user_rating_distribution.png)
 
 ### 2.9. Average Rating (`avg_rating`) <a href="#2-ea">^</a>
 
@@ -322,13 +322,13 @@ anime['avg_rating'].describe()
 # Name: avg_rating, dtype: float64
 ```
 
-![](./assets/imgs/07_avg_rating_distribution.png)
+![](./assets/imgs/01_exploratory/07_avg_rating_distribution.png)
 
 By inspection, the average ratings seem to be about normally distributed.
 
 Now, let's find which shows have the highest ratings:
 
-![](./assets/imgs/08_title_top10_avg_rating.png)
+![](./assets/imgs/01_exploratory/08_title_top10_avg_rating.png)
 
 Currently, the top rated show seems to be: *Fruits Basket the Final Season*.
 
@@ -350,7 +350,7 @@ anime['num_votes'].describe()
 
 Let's find out which shows have the most votes:
 
-![](./assets/imgs/09_title_top10_num_votes.png)
+![](./assets/imgs/01_exploratory/09_title_top10_num_votes.png)
 
 ### 2.11. Tags (`tags`) <a href="#2-ea">^</a>
 
@@ -366,7 +366,7 @@ tags_df['tags'].nunique()
 
 Which tags are the most common?
 
-![](./assets/imgs/10_tags_top10_count.png)
+![](./assets/imgs/01_exploratory/10_tags_top10_count.png)
 
 ### 2.12. Content Warnings (`content_warnings`) <a href="#2-ea">^</a>
 
@@ -382,7 +382,7 @@ cw_df['content_warnings'].nunique()
 
 Now, let's arrange them from most to least common:
 
-![](./assets/imgs/11_cw_top10_count.png)
+![](./assets/imgs/01_exploratory/11_cw_top10_count.png)
 
 ### 2.13. Users (`username`) <a href="#2-ea">^</a>
 
@@ -398,7 +398,7 @@ There seems to **117,162** unique users.
 
 Let's find which users are the most active by checking how many titles they have watched:
 
-![](./assets/imgs/12_username_top10_count.png)
+![](./assets/imgs/01_exploratory/12_username_top10_count.png)
 
 ### 2.14. Watch Status (`status`) <a href="#2-ea">^</a>
 
@@ -452,7 +452,23 @@ The vast majority only watch shows once, however, many others like to re-watch s
 
 ## 3. Relational (Multivariate) Analysis <a name="3-ra"  href="#toc">^</a>
 
-## 4. Feature Engineering & Data Preparation <a name="4-fe+dp"  href="#toc">^</a>
+## 4. Feature Engineering <a name="4-fe"  href="#toc">^</a>
+
+The following formula is used to calculate the Top Rated 250 titles. This formula provides a true 'Bayesian estimate', which takes into account the number of votes each title has received, minimum votes required to be on the list, and the mean vote for all titles:
+
+weighted rating (WR) = (v ÷ (v+m)) × R + (m ÷ (v+m)) × C
+
+Where:
+
+R = average for the movie (mean) = (rating)
+
+v = number of votes for the movie = (votes)
+
+m = minimum votes required to be listed in the Top Rated list (currently 25,000)
+
+C = the mean vote across the whole report
+
+source: https://help.imdb.com/article/imdb/track-movies-tv/ratings-faq/G67Y87TFYYP6TWAV#
 
 ## 5. Model Training & Evaluation <a name="5-model"  href="#toc">^</a>
 
