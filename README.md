@@ -1,4 +1,4 @@
-# The Anime Recommendation Engine
+# Recommendation Engine for Anime-Planet
 
 ### Helping you find your next favourite anime to binge watch
 
@@ -10,15 +10,11 @@ _**[Introduction](#introduction)**_
 
 _**[1. Data Collection & Cleaning](#1-collection)**_
 
-_**[2. Exploratory Analysis](#2-ea)**_
+_**[2. Feature Engineering](#2-fe)**_ 
 
-_**[3. Relational (Multivariate) Analysis ](#3-ra)**_
+_**[3. Model Training & Evaluation](#3-model)**_
 
-_**[4. Feature Engineering](#4-fe)**_ 
-
-_**[5. Model Training & Evaluation](#5-model)**_
-
-_**[6. Final Results](#6-results)**_
+_**[4. Final Results](#4-results)**_
 
 _**[Conclusion](#conclusion)**_
 
@@ -26,9 +22,11 @@ _**[Appendix](#appendix)**_
 
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 1: Featured Tables](#appendix1)**_
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 2: Model Evaluation](#appendix2)**_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 2: Exploratory Analysis](#appendix2)**_
 
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 3: Reproducing the Results](#appendix3)**_
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 3: Model Evaluation](#appendix3)**_
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 4: Reproducing the Results](#appendix4)**_
 
 _**[Sources](#sources)**_
 
@@ -40,9 +38,30 @@ _**[Sources](#sources)**_
 
 The data for this project was collected by scraping pages from [Anime-Planet](https://www.anime-planet.com/), a database that contains information about anime shows/movies and a place for users to log their watch history, to-watch list, rate and review anime. 
 
+## 2. Feature Engineering <a name="2-fe"  href="#toc">^</a>
 
 
-## 2. Exploratory Analysis <a name="2-ea"  href="#toc">^</a>
+
+## 3. Model Training & Evaluation <a name="3-model"  href="#toc">^</a>
+
+## 4. Final Results <a name="4-results" href="#toc">^</a>
+
+## Conclusion <a name="conclusion" href="#toc">^</a>
+
+## Appendix <a name="appendix" href="#toc">^</a>
+
+### Appendix 1: Featured Tables <a name="appendix1" href="#toc">^</a>
+
+#### Table 1: 
+
+| Feature Name | Description | Data Type |
+| :----------: | :---------: | :-------: |
+|              |             |           |
+|              |             |           |
+|              |             |           |
+|              |             |           |
+
+### Appendix 2: Exploratory Analysis <a name="appendix2" href="#toc">^</a>
 
 First, let's check the shape of the data:
 
@@ -126,7 +145,7 @@ anime.info(show_counts=True)
 
 Now, let's examine each of these variables individually:
 
-### 2.1. Title (`title`) <a href="#2-ea">^</a>
+### i. Title (`title`) <a href="#2-ea">^</a>
 
 Let's find how many unique anime shows are present in this data set:
 
@@ -140,7 +159,7 @@ Of these, which are the most popular?
 
 ![](./assets/imgs/01_exploratory/01_title_top10_count.png)
 
-### 2.2. Number of Episodes (`num_eps`) <a href="#2-ea">^</a>
+### ii. Number of Episodes (`num_eps`) <a href="#2-ea">^</a>
 
 Let's examine the `num_eps` columns:
 
@@ -194,9 +213,10 @@ anime.loc[anime['num_eps'] == anime['num_eps'].max(), \
   </tbody>
 </table>
 
+
 It's a show called _Sazae-san_, which started in **1969** and is still ongoing!
 
-### 2.3. Is the show ongoing? (`is_ongoing`) <a href="#2-ea">^</a>
+### iii. Is the show ongoing? (`is_ongoing`) <a href="#2-ea">^</a>
 
 ```python
 anime['ongoing'].value_counts(dropna=False)
@@ -208,7 +228,7 @@ anime['ongoing'].value_counts(dropna=False)
 
 We see that the vast majority of shows are not ongoing (meaning they are completed).
 
-### 2.4. Duration (`duration`) <a href="#2-ea">^</a>
+### iv. Duration (`duration`) <a href="#2-ea">^</a>
 
 ```python
 anime['duration'].describe()
@@ -260,21 +280,22 @@ anime.loc[anime['duration'] == anime['duration'].max(), \
   </tbody>
 </table>
 
+
 It's a show called _Heidi: Heidi to Clara Hen_.
 
-### 2.5. Studio (`studio`) <a href="#2-ea">^</a>
+### v. Studio (`studio`) <a href="#2-ea">^</a>
 
 ![](./assets/imgs/01_exploratory/04_studio_top10_count.png)
 
 We see that _Toei Animation_ studio has created the most unique anime shows.
 
-### 2.6. Start Year (`start_year`) <a href="#2-ea">^</a>
+### vi. Start Year (`start_year`) <a href="#2-ea">^</a>
 
 ![](./assets/imgs/01_exploratory/05_start_year_distribution.png)
 
 We can see a sharp rise in the release of anime shows since the mid 1990's and we see a sudden dip in 2020, most likely due to the global pandemic.
 
-### 2.7. Season (`season`) <a href="#2-ea">^</a>
+### vii. Season (`season`) <a href="#2-ea">^</a>
 
 Anime release times are divided into four season throughout the year: *Winter*, *Spring*, *Summer*, and *Fall*.
 
@@ -282,7 +303,7 @@ Anime release times are divided into four season throughout the year: *Winter*, 
 
 We see that the most number of titles are released in the *Spring*. On the other hand, *Summer* seems to be the least popular release time.
 
-### 2.8. User Rating (`user_rating`) <a href="#2-ea">^</a>
+### viii. User Rating (`user_rating`) <a href="#2-ea">^</a>
 
 The user ratings are on a scale from **0.5** to **5.0** with incremental steps of **0.5**.
 
@@ -302,7 +323,7 @@ df['user_rating'].describe()
 
 ![](./assets/imgs/01_exploratory/13_user_rating_distribution.png)
 
-### 2.9. Average Rating (`avg_rating`) <a href="#2-ea">^</a>
+### ix. Average Rating (`avg_rating`) <a href="#2-ea">^</a>
 
 The average rating is the simple average of all the user ratings for this show.
 
@@ -332,7 +353,7 @@ Now, let's find which shows have the highest ratings:
 
 Currently, the top rated show seems to be: *Fruits Basket the Final Season*.
 
-### 2.10. Number of Votes (`num_votes`) <a href="#2-ea">^</a>
+### x. Number of Votes (`num_votes`) <a href="#2-ea">^</a>
 
 ```python
 anime['num_votes'].describe()
@@ -352,7 +373,7 @@ Let's find out which shows have the most votes:
 
 ![](./assets/imgs/01_exploratory/09_title_top10_num_votes.png)
 
-### 2.11. Tags (`tags`) <a href="#2-ea">^</a>
+### xi. Tags (`tags`) <a href="#2-ea">^</a>
 
 How many unique tags are there?
 
@@ -368,7 +389,7 @@ Which tags are the most common?
 
 ![](./assets/imgs/01_exploratory/10_tags_top10_count.png)
 
-### 2.12. Content Warnings (`content_warnings`) <a href="#2-ea">^</a>
+### xii. Content Warnings (`content_warnings`) <a href="#2-ea">^</a>
 
 Let's see how many unique content warning labels there are:
 
@@ -384,7 +405,7 @@ Now, let's arrange them from most to least common:
 
 ![](./assets/imgs/01_exploratory/11_cw_top10_count.png)
 
-### 2.13. Users (`username`) <a href="#2-ea">^</a>
+### xiii. Users (`username`) <a href="#2-ea">^</a>
 
 How many unique users are in this data set?
 
@@ -400,7 +421,7 @@ Let's find which users are the most active by checking how many titles they have
 
 ![](./assets/imgs/01_exploratory/12_username_top10_count.png)
 
-### 2.14. Watch Status (`status`) <a href="#2-ea">^</a>
+### xiv. Watch Status (`status`) <a href="#2-ea">^</a>
 
 ```python
 df['status'].value_counts()
@@ -414,7 +435,7 @@ df['status'].value_counts()
 
 The overwhelming majority of entries in this data set have been watched.
 
-### 2.15. Number of Times Watched (`times_watched`) <a href="#2-ea">^</a>
+### xv. Number of Times Watched (`times_watched`) <a href="#2-ea">^</a>
 
 ```python
 df['times_watched'].describe()
@@ -450,48 +471,9 @@ df['times_watched'].value_counts().head(10)
 
 The vast majority only watch shows once, however, many others like to re-watch shows multiple times. 
 
-## 3. Relational (Multivariate) Analysis <a name="3-ra"  href="#toc">^</a>
+### Appendix 3: In-depth Model Evaluation <a name="appendix3" href="#toc">^</a>
 
-## 4. Feature Engineering <a name="4-fe"  href="#toc">^</a>
-
-The following formula is used to calculate the Top Rated 250 titles. This formula provides a true 'Bayesian estimate', which takes into account the number of votes each title has received, minimum votes required to be on the list, and the mean vote for all titles:
-
-weighted rating (WR) = (v ÷ (v+m)) × R + (m ÷ (v+m)) × C
-
-Where:
-
-R = average for the movie (mean) = (rating)
-
-v = number of votes for the movie = (votes)
-
-m = minimum votes required to be listed in the Top Rated list (currently 25,000)
-
-C = the mean vote across the whole report
-
-source: https://help.imdb.com/article/imdb/track-movies-tv/ratings-faq/G67Y87TFYYP6TWAV#
-
-## 5. Model Training & Evaluation <a name="5-model"  href="#toc">^</a>
-
-## 6. Final Results <a name="6-results" href="#toc">^</a>
-
-## Conclusion <a name="conclusion" href="#toc">^</a>
-
-## Appendix <a name="appendix" href="#toc">^</a>
-
-### Appendix 1: Featured Tables <a name="appendix1" href="#toc">^</a>
-
-#### Table 1: 
-
-| Feature Name | Description | Data Type |
-| :----------: | :---------: | :-------: |
-|              |             |           |
-|              |             |           |
-|              |             |           |
-|              |             |           |
-
-### Appendix 2: In-depth Model Evaluation <a name="appendix3" href="#toc">^</a>
-
-### Appendix 3: Reproducing the Results <a name="appendix4" href="#toc">^</a>
+### Appendix 4: Reproducing the Results <a name="appendix4" href="#toc">^</a>
 
 ## Sources <a name="sources" href="#toc">^</a>
 
