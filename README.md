@@ -24,7 +24,7 @@ _**[Sources](#sources)**_
 
 ## Introduction <a name="introduction" href="#toc">^</a>
 
-
+![01_anime-definition](/home/alancmathew/Work/projects/06_anime-recommendation-engine/assets/imgs/00_general/01_anime-definition.png)
 
 **Goal**: Create an recommendation engine to predict which titles an individual who has watched a few anime shows, is likely to enjoy the most. 
 
@@ -69,6 +69,10 @@ Comparing this to the benchmark (the overall average rating of each title), whic
 While the model only performs slightly better than the benchmark (overall average rating of each title), this has been an incredible learning opportunity as I was able to stretch the limits of my understanding, and learn or improve on many skills such as web scraping, multi-processing, database creation and management, SQL queries, parallel-processing, data cleaning, exploratory analysis, model creation and evaluation, etc.
 
 I look forward to working on many more exciting projects in the future!
+
+
+
+
 
 ## Appendix: Exploratory Analysis <a name="appendix" href="#toc">^</a>
 
@@ -482,3 +486,8 @@ The vast majority only watch shows once, however, many others like to re-watch s
 
 ## Sources <a name="sources" href="#toc">^</a>
 
+[Anime-Planet](https://www.anime-planet.com/)
+
+[Definition of Anime](https://www.merriam-webster.com/dictionary/anime)
+
+[Similar Project](https://medium.com/code-heroku/building-a-movie-recommendation-engine-in-python-using-scikit-learn-c7489d7cb145)
