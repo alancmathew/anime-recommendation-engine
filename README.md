@@ -24,7 +24,7 @@ _**[Sources](#sources)**_
 
 ## Introduction <a name="introduction" href="#toc">^</a>
 
-![01_anime-definition](/home/alancmathew/Work/projects/06_anime-recommendation-engine/assets/imgs/00_general/01_anime-definition.png)
+![01_anime-definition](assets/imgs/00_general/01_anime-definition.png)
 
 **Goal**: Create an recommendation engine to predict which titles an individual who has watched a few anime shows, is likely to enjoy the most. 
 
