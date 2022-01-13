@@ -1,6 +1,6 @@
-# Recommendation Engine for Anime-Planet
+# Anime Recommendation Engine
 
-### Helping you find your next favourite anime to binge watch
+### Helping you find the one to binge-watch
 
 ![00_titleImage](./assets/imgs/00_general/00_anime-cover-cropped.jpg)
 
@@ -18,15 +18,7 @@ _**[4. Final Results](#4-results)**_
 
 _**[Conclusion](#conclusion)**_
 
-_**[Appendix](#appendix)**_
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 1: Featured Tables](#appendix1)**_
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 2: Exploratory Analysis](#appendix2)**_
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 3: Model Evaluation](#appendix3)**_
-
-&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;_**[Appendix 4: Reproducing the Results](#appendix4)**_
+_**[Appendix: Exploratory Analysis](#appendix)**_
 
 _**[Sources](#sources)**_
 
@@ -38,9 +30,21 @@ _**[Sources](#sources)**_
 
 The data for this project was collected by scraping pages from [Anime-Planet](https://www.anime-planet.com/), a database that contains information about anime shows/movies and a place for users to log their watch history, to-watch list, rate and review anime. 
 
+To find links to user pages, the program crawled over 5 million pages of the websites. It then scraped 250k+ pages of user data, did some preliminary cleaning, and stored the data in a SQL database.
+
 ## 2. Feature Engineering <a name="2-fe"  href="#toc">^</a>
 
+The titles in the data set are rated on a scale of 0 to 5, with 0.5 increments. Since different users have a varied rating scale (some users may be more likely to maintain a higher average rating, and vice-versa), the ratings need to be normalised to account for the individual user's behaviour. To accomplish this, a mean/std scaler was used to bring the mean rating of each users to 0 and their standard deviation to 1 (just like a standard normal distribution).
 
+However, this created the problem that some ratings were extremely far from 0 (either negative or positive directions). To address this, a logistic/sigmoid function was used to compress all the results into the range of 0 to 1. 
+
+The function that was used is:
+
+$$
+f(x) = \frac{1}{1 + e^{-x}}
+$$
+
+Afterwards, a pivot was applied to the data set to get usernames as the row indicies, show titles as the column names, and each cell represents the rating that particular user gave to the specific title (empty cells where users have not rated those titles).
 
 ## 3. Model Training & Evaluation <a name="3-model"  href="#toc">^</a>
 
@@ -48,20 +52,7 @@ The data for this project was collected by scraping pages from [Anime-Planet](ht
 
 ## Conclusion <a name="conclusion" href="#toc">^</a>
 
-## Appendix <a name="appendix" href="#toc">^</a>
-
-### Appendix 1: Featured Tables <a name="appendix1" href="#toc">^</a>
-
-#### Table 1: 
-
-| Feature Name | Description | Data Type |
-| :----------: | :---------: | :-------: |
-|              |             |           |
-|              |             |           |
-|              |             |           |
-|              |             |           |
-
-### Appendix 2: Exploratory Analysis <a name="appendix2" href="#toc">^</a>
+## Appendix: Exploratory Analysis <a name="appendix" href="#toc">^</a>
 
 First, let's check the shape of the data:
 
@@ -470,10 +461,6 @@ df['times_watched'].value_counts().head(10)
 ```
 
 The vast majority only watch shows once, however, many others like to re-watch shows multiple times. 
-
-### Appendix 3: In-depth Model Evaluation <a name="appendix3" href="#toc">^</a>
-
-### Appendix 4: Reproducing the Results <a name="appendix4" href="#toc">^</a>
 
 ## Sources <a name="sources" href="#toc">^</a>
 
