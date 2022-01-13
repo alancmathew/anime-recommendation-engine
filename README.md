@@ -44,11 +44,9 @@ However, this created the problem that some ratings were extremely far from 0 (e
 
 The function that was used is:
 
-<img src="https://render.githubusercontent.com/render/math?math=f(x) = \frac{1}{1 + e^{-x}}">
+![02_sigmoid](assets/imgs/00_general/02_sigmoid.png)
 
-Afterwards, a pivot was applied to the data set to get usernames as the row indicies, show titles as the column names, and each cell represents the rati
-
-ng that particular user gave to the specific title (empty cells where users have not rated those titles).
+Afterwards, a pivot was applied to the data set to get usernames as the row indicies, show titles as the column names, and each cell represents the rating that particular user gave to the specific title (empty cells where users have not rated those titles).
 
 ## 3. Model Training & Evaluation Method <a name="3-model"  href="#toc">^</a>
 
