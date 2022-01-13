@@ -1,6 +1,6 @@
 # Anime Recommendation Engine
 
-### Helping you find the one to binge-watch
+### Helping you find the next one to binge-watch
 
 ![00_titleImage](./assets/imgs/00_general/00_anime-cover-cropped.jpg)
 
@@ -12,7 +12,7 @@ _**[1. Data Collection & Cleaning](#1-collection)**_
 
 _**[2. Feature Engineering](#2-fe)**_ 
 
-_**[3. Model Training & Evaluation](#3-model)**_
+_**[3. Model Training & Evaluation Method](#3-model)**_
 
 _**[4. Final Results](#4-results)**_
 
@@ -26,11 +26,15 @@ _**[Sources](#sources)**_
 
 
 
+**Goal**: Create an recommendation engine to predict which titles an individual who has watched a few anime shows, is likely to enjoy the most. 
+
 ## 1. Data Collection & Cleaning <a name="1-collection" href="#toc">^</a>
 
 The data for this project was collected by scraping pages from [Anime-Planet](https://www.anime-planet.com/), a database that contains information about anime shows/movies and a place for users to log their watch history, to-watch list, rate and review anime. 
 
 To find links to user pages, the program crawled over 5 million pages of the websites. It then scraped 250k+ pages of user data, did some preliminary cleaning, and stored the data in a SQL database.
+
+For exploratory analysis of the data, take a look at the [appendix](#appendix).
 
 ## 2. Feature Engineering <a name="2-fe"  href="#toc">^</a>
 
@@ -46,11 +50,25 @@ $$
 
 Afterwards, a pivot was applied to the data set to get usernames as the row indicies, show titles as the column names, and each cell represents the rating that particular user gave to the specific title (empty cells where users have not rated those titles).
 
-## 3. Model Training & Evaluation <a name="3-model"  href="#toc">^</a>
+## 3. Model Training & Evaluation Method <a name="3-model"  href="#toc">^</a>
+
+The model used in this project was written from scratch. The main part of it is the construction of the cosine similarity matrix to find out which users are most similar to each other. This information is then used to find the average rating for each title of all the most similar users. Then, the  highest predicted values (titles the current user is most likely to enjoy based on the rating of similar users) is output to the user to allow them to pick the title they think would be the most interesting.
+
+The decided upon evaluation metric is RMSE (Root Mean Squared Error). A RMSE value of 0 represents a perfect prediction, while a large value represents poor prediction performance. 
+
+A few hyper-parameters were tuned to improve the performance of the model. These include the number of similar users to consider for the prediction of ratings, and also, whether to apply a simple or weighted average for the predicted rating of each titles. The first parameter is fairly self-explanatory, the weighted averaging method will be explained. When the number of similar users are decided, the next step is to give a higher weighting to the most similar user, a little less weighting to the second most similar user, and so on until the last of the similar users has the lowest weight. Doing this ensures that the magnitude of similarity is also considered in the average, since the more similar a user is, their rating patters are probably more indicative of the current user's, when compared to another user that is less similar.
 
 ## 4. Final Results <a name="4-results" href="#toc">^</a>
 
+After testing many models with varied hyper-parameters, the best model was determined to the model that considers the weighted average of the 2000 most similar users, with an RMSE of 0.179026.
+
+Comparing this to the benchmark (the overall average rating of each title), which had an RMSE of 0.184883, the model seems to perform better. While the improvement is not largely significant, the models seems to have an ~3.1681% decrease in RMSE compared to the benchmark.
+
 ## Conclusion <a name="conclusion" href="#toc">^</a>
+
+While the model only performs slightly better than the benchmark (overall average rating of each title), this has been an incredible learning opportunity as I was able to stretch the limits of my understanding, and learn or improve on many skills such as web scraping, multi-processing, database creation and management, SQL queries, parallel-processing, data cleaning, exploratory analysis, model creation and evaluation, etc.
+
+I look forward to working on many more exciting projects in the future!
 
 ## Appendix: Exploratory Analysis <a name="appendix" href="#toc">^</a>
 
